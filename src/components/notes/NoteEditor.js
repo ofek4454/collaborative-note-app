@@ -4,7 +4,7 @@ import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { Button, Form, Alert, Col } from "react-bootstrap";
 import { useNotebook } from "../../hooks/useNotebook";
 
-const NoteEditor = ({ note, onClose, refreshNotes }) => {
+const NoteEditor = ({ note, onClose }) => {
   const { selectedNotebook } = useNotebook();
   const [title, setTitle] = useState(note ? note.title : "");
   const [content, setContent] = useState(note ? note.content : "");
@@ -34,7 +34,6 @@ const NoteEditor = ({ note, onClose, refreshNotes }) => {
           lastModified: new Date(),
         });
       }
-      refreshNotes();
       onClose();
     } catch (error) {
       setError("Error saving note");

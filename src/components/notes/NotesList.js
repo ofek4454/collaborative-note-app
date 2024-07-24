@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../firebase";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc } from "firebase/firestore";
 import { ListGroup, Button, Alert, Col } from "react-bootstrap";
 import { useNotebook } from "../../hooks/useNotebook";
 import NoteEditor from "./NoteEditor";
@@ -12,19 +12,26 @@ const NotesList = () => {
   const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
-    const fetchNotes = async () => {
-      if (selectedNotebook) {
-        const notesCollection = collection(db, "notebooks", selectedNotebook.id, "notes");
-        const querySnapshot = await getDocs(notesCollection);
-        const noteData = querySnapshot.docs.map((doc) => ({
+    if (!selectedNotebook) return;
+
+    // Set up real-time listener for notes
+    const notesCollection = collection(db, "notebooks", selectedNotebook.id, "notes");
+    const unsubscribe = onSnapshot(
+      notesCollection,
+      (snapshot) => {
+        const noteData = snapshot.docs.map((doc) => ({
           ...doc.data(),
           id: doc.id,
         }));
         setNotes(noteData);
+      },
+      (error) => {
+        console.error("Error fetching notes:", error);
       }
-    };
+    );
 
-    fetchNotes();
+    // Clean up the listener on component unmount
+    return () => unsubscribe();
   }, [selectedNotebook]);
 
   const handleNoteSelect = (note) => {
@@ -58,28 +65,7 @@ const NotesList = () => {
           </ListGroup.Item>
         ))}
       </ListGroup>
-      {showEditor && (
-        <NoteEditor
-          note={selectedNote}
-          onClose={() => setShowEditor(false)}
-          refreshNotes={() => {
-            // Function to refresh notes list after creating or editing
-            const fetchNotes = async () => {
-              if (selectedNotebook) {
-                const notesCollection = collection(db, "notebooks", selectedNotebook.id, "notes");
-                const querySnapshot = await getDocs(notesCollection);
-                const noteData = querySnapshot.docs.map((doc) => ({
-                  ...doc.data(),
-                  id: doc.id,
-                }));
-                setNotes(noteData);
-              }
-            };
-
-            fetchNotes();
-          }}
-        />
-      )}
+      {showEditor && <NoteEditor note={selectedNote} onClose={() => setShowEditor(false)} />}
     </Col>
   );
 };

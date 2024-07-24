@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../../firebase";
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, addDoc, onSnapshot } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { ListGroup, Button, Form, Alert, Col, InputGroup } from "react-bootstrap";
 import { useNotebook } from "../../hooks/useNotebook";
@@ -13,17 +13,27 @@ const NotebookList = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchNotebooks = async () => {
-      const querySnapshot = await getDocs(collection(db, "notebooks"));
-      const notebookData = querySnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-      }));
-      setNotebooks(notebookData);
-    };
+    if (!user) return;
 
-    fetchNotebooks();
-  }, []);
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(
+      collection(db, "notebooks"),
+      (snapshot) => {
+        const notebookData = snapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setNotebooks(notebookData);
+      },
+      (error) => {
+        console.error("Error fetching notebooks:", error);
+        setError("Error fetching notebooks");
+      }
+    );
+
+    // Clean up listener on component unmount
+    return () => unsubscribe();
+  }, [user]);
 
   const handleCreateNotebook = async () => {
     if (newNotebookName.trim() === "") {
@@ -32,11 +42,10 @@ const NotebookList = () => {
     }
 
     try {
-      const docRef = await addDoc(collection(db, "notebooks"), {
+      await addDoc(collection(db, "notebooks"), {
         name: newNotebookName,
         uid: user.uid,
       });
-      setNotebooks([...notebooks, { id: docRef.id, name: newNotebookName, uid: user.uid }]);
       setNewNotebookName("");
       setError("");
     } catch (error) {
