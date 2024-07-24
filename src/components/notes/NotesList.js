@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../firebase";
-import { collection, onSnapshot, addDoc } from "firebase/firestore";
-import { ListGroup, Button, Alert, Col } from "react-bootstrap";
+import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { ListGroup, Button, Col } from "react-bootstrap";
 import { useNotebook } from "../../hooks/useNotebook";
 import NoteEditor from "./NoteEditor";
+import NoteCard from "./NoteCard";
 
 const NotesList = () => {
   const { selectedNotebook } = useNotebook();
@@ -14,7 +15,6 @@ const NotesList = () => {
   useEffect(() => {
     if (!selectedNotebook) return;
 
-    // Set up real-time listener for notes
     const notesCollection = collection(db, "notebooks", selectedNotebook.id, "notes");
     const unsubscribe = onSnapshot(
       notesCollection,
@@ -30,7 +30,6 @@ const NotesList = () => {
       }
     );
 
-    // Clean up the listener on component unmount
     return () => unsubscribe();
   }, [selectedNotebook]);
 
@@ -42,6 +41,17 @@ const NotesList = () => {
   const handleCreateNewNote = () => {
     setSelectedNote(null);
     setShowEditor(true);
+  };
+
+  const handleDeleteNote = async (noteId) => {
+    if (selectedNotebook && noteId) {
+      try {
+        await deleteDoc(doc(db, "notebooks", selectedNotebook.id, "notes", noteId));
+        setNotes(notes.filter((note) => note.id !== noteId));
+      } catch (error) {
+        console.error("Error deleting note:", error);
+      }
+    }
   };
 
   if (!selectedNotebook) {
@@ -58,11 +68,14 @@ const NotesList = () => {
       <Button variant="primary" className="mb-3" onClick={handleCreateNewNote}>
         New Note
       </Button>
-      <ListGroup className="mt-3">
+      <ListGroup className="mt-3 ms-2 me-4">
         {notes.map((note) => (
-          <ListGroup.Item key={note.id} action onClick={() => handleNoteSelect(note)}>
-            {note.title}
-          </ListGroup.Item>
+          <NoteCard
+            key={note.id}
+            note={note}
+            onEdit={() => handleNoteSelect(note)}
+            onDelete={() => handleDeleteNote(note.id)}
+          />
         ))}
       </ListGroup>
       {showEditor && <NoteEditor note={selectedNote} onClose={() => setShowEditor(false)} />}
