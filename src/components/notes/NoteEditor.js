@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../firebase";
-import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, deleteField, Timestamp } from "firebase/firestore";
 import { Button, Form, Alert, Col } from "react-bootstrap";
 import { useNotebook } from "../../hooks/useNotebook";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../../firebase";
 
 const NoteEditor = ({ note, onClose }) => {
   const { selectedNotebook } = useNotebook();
   const [title, setTitle] = useState(note ? note.title : "");
   const [content, setContent] = useState(note ? note.content : "");
   const [error, setError] = useState("");
+  const [user] = useAuthState(auth);
 
   const handleSave = async () => {
     if (title.trim() === "" || content.trim() === "") {
@@ -18,28 +21,84 @@ const NoteEditor = ({ note, onClose }) => {
 
     try {
       if (note) {
-        // Update existing note
         const noteRef = doc(db, "notebooks", selectedNotebook.id, "notes", note.id);
-        await updateDoc(noteRef, {
-          title,
-          content,
-          lastModified: new Date(),
-        });
-      } else {
-        // Create new note
-        await addDoc(collection(db, "notebooks", selectedNotebook.id, "notes"), {
-          title,
-          content,
-          createdAt: new Date(),
-          lastModified: new Date(),
-        });
+
+        // Save history if note already exists
+        if (note) {
+          const historyRef = collection(noteRef, "history");
+          await addDoc(historyRef, {
+            title: note.title,
+            content: note.content,
+            changedBy: user.uid,
+            changedAt: note.last,
+          });
+
+          await updateDoc(noteRef, {
+            title,
+            content,
+            lastModified: Timestamp.now(),
+            lockedBy: deleteField(), // Remove the lockedBy field if applicable
+          });
+        } else {
+          // Create new note
+          await addDoc(collection(db, "notebooks", selectedNotebook.id, "notes"), {
+            title,
+            content,
+            createdAt: new Date(),
+            lastModified: new Date(),
+          });
+        }
+        onClose();
       }
-      onClose();
     } catch (error) {
       setError("Error saving note");
       console.error("Error saving note:", error);
     }
   };
+
+  const unlockNote = async () => {
+    if (note) {
+      try {
+        const noteRef = doc(db, "notebooks", selectedNotebook.id, "notes", note.id);
+        await updateDoc(noteRef, {
+          lockedBy: deleteField(), // Remove the lockedBy field
+        });
+      } catch (error) {
+        console.error("Error unlocking note:", error);
+      }
+    }
+  };
+
+  const lockNote = async () => {
+    if (note) {
+      const noteRef = doc(db, "notebooks", selectedNotebook.id, "notes", note.id);
+      try {
+        await updateDoc(noteRef, {
+          lockedBy: user.uid,
+        });
+      } catch (error) {
+        console.error("Error locking note:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (note) {
+      lockNote();
+    }
+
+    const handleBeforeUnload = async (event) => {
+      await unlockNote();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      // Unlock the note when the component unmounts or the user navigates away
+      unlockNote();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [note]);
 
   useEffect(() => {
     if (note) {

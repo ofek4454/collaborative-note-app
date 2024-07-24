@@ -1,0 +1,16 @@
+.notebook-item {
+  position: relative; /* Make the notebook item a positioned element */
+}
+
+.delete-btn {
+  position: absolute; /* Position the delete button absolutely within the notebook item */
+  right: 10px; /* Adjust the position as needed */
+  top: 50%;
+  transform: translateY(-50%); /* Center the button vertically */
+  opacity: 0; /* Hide the button by default */
+  transition: opacity 0.3s ease; /* Smooth transition for visibility */
+}
+
+.notebook-item:hover .delete-btn {
+  opacity: 1; /* Show the button on hover */
+}

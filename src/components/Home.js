@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Navbar, Nav, Button, Row, Col } from "react-bootstrap";
+import { Container, Navbar, Nav, Button, Row } from "react-bootstrap";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { db, auth } from "../../firebase";
-import { collection, addDoc, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { ListGroup, Button, Form, Alert, Col, InputGroup } from "react-bootstrap";
 import { useNotebook } from "../../hooks/useNotebook";
+import { FaTrash } from "react-icons/fa";
+import "./NotebookList.css";
 
 const NotebookList = () => {
   const { selectedNotebook, setSelectedNotebook } = useNotebook();
@@ -54,6 +56,20 @@ const NotebookList = () => {
     }
   };
 
+  const handleDeleteNotebook = async (notebookId) => {
+    if (window.confirm("Are you sure you want to delete this notebook?")) {
+      try {
+        await deleteDoc(doc(db, "notebooks", notebookId));
+        if (selectedNotebook?.id === notebookId) {
+          setSelectedNotebook(null);
+        }
+      } catch (error) {
+        console.error("Error deleting notebook:", error);
+        setError("Error deleting notebook");
+      }
+    }
+  };
+
   return (
     <Col
       md={3}
@@ -91,8 +107,19 @@ const NotebookList = () => {
             action
             active={selectedNotebook && notebook.id === selectedNotebook.id}
             onClick={() => setSelectedNotebook(notebook)}
+            className="notebook-item d-flex justify-content-between align-items-center"
           >
-            {notebook.name}
+            <span>{notebook.name}</span>
+            <Button
+              variant="link"
+              className="text-danger p-0 delete-btn"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent the notebook from being selected
+                handleDeleteNotebook(notebook.id);
+              }}
+            >
+              <FaTrash />
+            </Button>
           </ListGroup.Item>
         ))}
       </ListGroup>
