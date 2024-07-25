@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Button, Collapse, ListGroup, Modal } from "react-bootstrap";
 import { FaEdit, FaTrash, FaChevronDown, FaChevronUp, FaLock, FaHistory } from "react-icons/fa";
-import { Timestamp, collection, getDocs } from "firebase/firestore";
+import { Timestamp, collection, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useNotebook } from "../../hooks/useNotebook";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { GrRevert } from "react-icons/gr";
 
 const NoteCard = ({ note, onEdit, onDelete }) => {
   const { selectedNotebook } = useNotebook();
@@ -50,6 +51,38 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
     historyData.sort((a, b) => b.changedAt.toDate() - a.changedAt.toDate());
     setHistory(historyData);
     setShowHistoryModal(true);
+  };
+
+  const revertToVersion = async (historyEntry) => {
+    try {
+      // Save the current note to history before reverting
+      const historyCollectionRef = collection(
+        db,
+        "notebooks",
+        selectedNotebook.id,
+        "notes",
+        note.id,
+        "history"
+      );
+
+      await addDoc(historyCollectionRef, {
+        ...note,
+        changedAt: new Date(),
+        changedBy: user.uid,
+      });
+
+      // Revert the note to the selected history entry
+      const noteDocRef = doc(db, "notebooks", selectedNotebook.id, "notes", note.id);
+      await updateDoc(noteDocRef, {
+        title: historyEntry.title,
+        content: historyEntry.content,
+        lastModified: new Date(),
+      });
+
+      setShowHistoryModal(false);
+    } catch (error) {
+      console.error("Error reverting note:", error);
+    }
   };
 
   return (
@@ -118,12 +151,24 @@ const NoteCard = ({ note, onEdit, onDelete }) => {
           ) : (
             <ListGroup>
               {history.map((entry) => (
-                <ListGroup.Item key={entry.id}>
+                <ListGroup.Item
+                  key={entry.id}
+                  className="d-flex justify-content-between align-items-center"
+                >
                   <div>
                     <strong>{entry.title}</strong>
+                    <div>{entry.content}</div>
+                    <div>{entry.changedAt.toDate().toLocaleString()}</div>
                   </div>
-                  <div>{entry.content}</div>
-                  <div>{entry.changedAt.toDate().toLocaleString()}</div>
+                  {!isLocked && (
+                    <Button
+                      variant="link"
+                      onClick={() => revertToVersion(entry)}
+                      className="p-0 text-primary"
+                    >
+                      <GrRevert style={{ color: "#404040" }} />
+                    </Button>
+                  )}
                 </ListGroup.Item>
               ))}
             </ListGroup>
