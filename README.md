@@ -1,70 +1,97 @@
-# Getting Started with Create React App
+# Project Name: Notes Management App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Overview
 
-## Available Scripts
+The Notes Management App is a web application built to manage and organize notes within notebooks. It provides features such as creating, editing, and deleting notes, viewing note history, and reverting to previous versions. The app utilizes Firebase Firestore for real-time data management and authentication.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+1. **User Authentication**:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+   - Users can sign in and out using Firebase Authentication.
+   - Each user's data is securely stored and isolated.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+2. **Notebooks and Notes Management**:
 
-### `npm test`
+   - Users can create multiple notebooks.
+   - Each notebook can contain multiple notes.
+   - Notes can be created, edited, and deleted.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+3. **Note Locking**:
 
-### `npm run build`
+   - Notes can be locked to prevent editing by others.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+4. **Note History**:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+   - Changes to notes are tracked in a history subcollection.
+   - Users can view previous versions of notes.
+   - Notes can be reverted to any previous version.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+5. **Real-time Updates**:
+   - All data changes are reflected in real-time across all connected clients.
 
-### `npm run eject`
+## Technologies Used
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- **Frontend**: React, Bootstrap, React Bootstrap
+- **Backend**: Firebase Firestore, Firebase Authentication
+- **Icons**: React Icons
+- **State Management**: React Hooks, Firebase Hooks
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Database Schema
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+The following is the structure of the Firestore database used in the app:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- **notebooks (collection)**
+  - **notebookId1 (document)**
+    - **name**: string (Name of the notebook)
+    - **uid**: string (User ID of the notebook owner)
+    - **notes (subcollection)**
+      - **noteId1 (document)**
+        - **title**: string (Title of the note)
+        - **content**: string (Content of the note)
+        - **uid**: string (User ID of the note owner)
+        - **createdAt**: timestamp (Timestamp of note creation)
+        - **lastModified**: timestamp (Timestamp of last modification)
+        - **lockedBy**: string (User ID of the user who locked the note)
+        - **history (subcollection)**
+          - **histId1 (document)**
+            - **title**: string (Title of the note version)
+            - **content**: string (Content of the note version)
+            - **changedAt**: timestamp (Timestamp of the change)
+            - **changedBy**: string (User ID of the user who made the change)
 
-## Learn More
+## How to Run the Project
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. **Clone the Repository:**
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+   ```bash
+   git clone <repository-url>
+   cd notes-management-app
+   ```
 
-### Code Splitting
+2. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Run the App:**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+   ```bash
+   npm start
+   ```
 
-### Analyzing the Bundle Size
+4. **Open the browser:**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- Navigate to http://localhost:3000 to view the app.
 
-### Making a Progressive Web App
+## Acknowledgements
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+We would like to acknowledge the following resources and libraries that made this project possible:
 
-### Advanced Configuration
+- [React](https://reactjs.org/): A JavaScript library for building user interfaces.
+- [Firebase](https://firebase.google.com/): A platform developed by Google for creating mobile and web applications, providing backend services like authentication, database, and hosting.
+- [React Bootstrap](https://react-bootstrap.github.io/): A library that integrates Bootstrap with React for easy UI development.
+- [React Icons](https://react-icons.github.io/react-icons/): A collection of popular icons used in React projects.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Contact
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+For any queries, please contact Ofek Gorgi at [ofek4454@gmail.com].
