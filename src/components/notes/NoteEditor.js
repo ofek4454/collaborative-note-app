@@ -22,34 +22,31 @@ const NoteEditor = ({ note, onClose }) => {
     try {
       if (note) {
         const noteRef = doc(db, "notebooks", selectedNotebook.id, "notes", note.id);
-
         // Save history if note already exists
-        if (note) {
-          const historyRef = collection(noteRef, "history");
-          await addDoc(historyRef, {
-            title: note.title,
-            content: note.content,
-            changedBy: user.uid,
-            changedAt: note.lastModified,
-          });
+        const historyRef = collection(noteRef, "history");
+        await addDoc(historyRef, {
+          title: note.title,
+          content: note.content,
+          changedBy: user.uid,
+          changedAt: note.lastModified,
+        });
 
-          await updateDoc(noteRef, {
-            title,
-            content,
-            lastModified: Timestamp.now(),
-            lockedBy: deleteField(), // Remove the lockedBy field if applicable
-          });
-        } else {
-          // Create new note
-          await addDoc(collection(db, "notebooks", selectedNotebook.id, "notes"), {
-            title,
-            content,
-            createdAt: new Date(),
-            lastModified: new Date(),
-          });
-        }
-        onClose();
+        await updateDoc(noteRef, {
+          title,
+          content,
+          lastModified: Timestamp.now(),
+          lockedBy: deleteField(), // Remove the lockedBy field if applicable
+        });
+      } else {
+        // Create new note
+        await addDoc(collection(db, "notebooks", selectedNotebook.id, "notes"), {
+          title,
+          content,
+          createdAt: new Date(),
+          lastModified: new Date(),
+        });
       }
+      onClose();
     } catch (error) {
       setError("Error saving note");
       console.error("Error saving note:", error);
