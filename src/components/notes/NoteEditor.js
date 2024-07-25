@@ -30,7 +30,7 @@ const NoteEditor = ({ note, onClose }) => {
             title: note.title,
             content: note.content,
             changedBy: user.uid,
-            changedAt: note.last,
+            changedAt: note.lastModified,
           });
 
           await updateDoc(noteRef, {
