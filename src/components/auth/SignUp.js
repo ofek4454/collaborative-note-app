@@ -53,6 +53,9 @@ const SignUp = () => {
               Sign Up
             </Button>
           </Form>
+          <div className="text-center mt-2">
+            Already have an acount? <a href="/signin">Sign In</a>
+          </div>
         </Col>
       </Row>
     </Container>

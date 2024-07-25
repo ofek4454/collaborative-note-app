@@ -2,18 +2,20 @@ import React, { useState } from "react";
 import { Button, Collapse, ListGroup, Modal } from "react-bootstrap";
 import { FaEdit, FaTrash, FaChevronDown, FaChevronUp, FaLock, FaHistory } from "react-icons/fa";
 import { Timestamp, collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
+import { auth, db } from "../../firebase";
 import { useNotebook } from "../../hooks/useNotebook";
+import { useAuthState } from "react-firebase-hooks/auth";
 
 const NoteCard = ({ note, onEdit, onDelete }) => {
   const { selectedNotebook } = useNotebook();
   const [expanded, setExpanded] = useState(false);
   const [history, setHistory] = useState([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [user] = useAuthState(auth);
 
   const toggleExpand = () => setExpanded((prev) => !prev);
 
-  const isLocked = "lockedBy" in note;
+  const isLocked = "lockedBy" in note && note.lockedBy !== user.uid;
 
   let lastModifiedDate;
   let createdDate;
